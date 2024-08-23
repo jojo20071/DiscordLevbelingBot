@@ -73,5 +73,5 @@ Feel free to fork the repository and submit pull requests. For major changes or 
 
 ## Contact
 
-For any questions or feedback, please contact [your-email@example.com](mailto:your-email@example.com).
+
 
