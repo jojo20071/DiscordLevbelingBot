@@ -143,4 +143,34 @@ async def claim_daily(ctx):
     conn.commit()
     await ctx.send(f'You have claimed your daily reward: {reward_item}.')
 
+
+@bot.command()
+async def remove_item(ctx, item: str):
+    user_id = ctx.author.id
+    c.execute('SELECT items FROM users WHERE user_id = ?', (user_id,))
+    items = c.fetchone()[0]
+    if items and item in items.split(','):
+        new_items = ','.join([i for i in items.split(',') if i != item])
+        c.execute('UPDATE users SET items = ? WHERE user_id = ?', (new_items, user_id))
+        conn.commit()
+        await ctx.send(f'{ctx.author.name} removed {item} from their inventory.')
+    else:
+        await ctx.send(f'{ctx.author.name} does not have {item}.')
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.send("Command not found.")
+    else:
+        await ctx.send("An error occurred. Please try again.")
+
+@bot.event
+async def on_member_remove(member):
+    c.execute('DELETE FROM users WHERE user_id = ?', (member.id,))
+    conn.commit()
+
+@bot.event
+async def on_member_join(member):
+    c.execute('INSERT OR IGNORE INTO users (user_id) VALUES (?)', (member.id,))
+    conn.commit()
 bot.run('YOUR_BOT_TOKEN')
