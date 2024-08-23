@@ -3,6 +3,8 @@ from discord.ext import commands
 import sqlite3
 from datetime import datetime, timedelta
 from discord.ext import tasks
+import shutil
+
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -270,4 +272,48 @@ async def item_value(ctx, item: str):
 async def add_item_value(ctx, item: str, value: int):
     item_values[item] = value
     await ctx.send(f'Value of {item} set to {value}.')
+
+@bot.command()
+async def leaderboard(ctx):
+    c.execute('SELECT user_id, level, experience FROM users ORDER BY experience DESC LIMIT 10')
+    rows = c.fetchall()
+    leaderboard_msg = 'Leaderboard:\n'
+    for row in rows:
+        user = bot.get_user(row[0])
+        if user:
+            leaderboard_msg += f'{user.name} - Level {row[1]} - {row[2]} XP\n'
+    await ctx.send(leaderboard_msg if leaderboard_msg else 'No users found.')
+
+@bot.command()
+async def backup(ctx):
+    backup_file = 'backup.db'
+    shutil.copy('game.db', backup_file)
+    await ctx.send(f'Backup created at {backup_file}.')
+
+@bot.command()
+async def restore(ctx):
+    shutil.copy('backup.db', 'game.db')
+    c.execute('ATTACH DATABASE "game.db" AS backup')
+    c.execute('CREATE TABLE IF NOT EXISTS users AS SELECT * FROM backup.users')
+    c.execute('DETACH DATABASE backup')
+    conn.commit()
+    await ctx.send('Database restored from backup.')
+
+@bot.command()
+async def item_info(ctx, item: str):
+    c.execute('SELECT user_id, items FROM users')
+    users = c.fetchall()
+    item_users = [bot.get_user(user_id) for user_id, items in users if item in items.split(',')]
+    if item_users:
+        user_names = ', '.join(user.name for user in item_users if user)
+        await ctx.send(f'{item} is owned by: {user_names}')
+    else:
+        await ctx.send(f'No users have {item} in their inventory.')
+
+@bot.command()
+async def clear_inventory(ctx):
+    user_id = ctx.author.id
+    c.execute('UPDATE users SET items = "" WHERE user_id = ?', (user_id,))
+    conn.commit()
+    await ctx.send(f'{ctx.author.name}\'s inventory has been cleared.')
 bot.run('YOUR_BOT_TOKEN')
