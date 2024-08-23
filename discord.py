@@ -254,4 +254,20 @@ async def help(ctx):
         "!help - Show this help message."
     )
     await ctx.send(help_text)
+
+item_values = {
+    'Mystery Box': 100,
+    'Rare Sword': 500,
+    'Health Potion': 50
+}
+
+@bot.command()
+async def item_value(ctx, item: str):
+    value = item_values.get(item, 'Item not found or no value assigned.')
+    await ctx.send(f'The value of {item} is {value}.') if isinstance(value, int) else await ctx.send(value)
+
+@bot.command()
+async def add_item_value(ctx, item: str, value: int):
+    item_values[item] = value
+    await ctx.send(f'Value of {item} set to {value}.')
 bot.run('YOUR_BOT_TOKEN')
