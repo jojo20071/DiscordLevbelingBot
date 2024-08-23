@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import sqlite3
+from datetime import datetime, timedelta
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -20,6 +21,14 @@ CREATE TABLE IF NOT EXISTS users (
 )
 ''')
 conn.commit()
+c.execute('''
+CREATE TABLE IF NOT EXISTS rewards (
+    user_id INTEGER PRIMARY KEY,
+    last_claimed TEXT
+)
+''')
+conn.commit()
+
 
 @bot.event
 async def on_ready():
@@ -97,4 +106,41 @@ async def trade_item(ctx, member: discord.Member, item: str):
         await ctx.send(f'{ctx.author.name} traded {item} to {member.name}.')
     else:
         await ctx.send(f'{ctx.author.name} does not have {item}.')
+
+@bot.command()
+async def user_info(ctx):
+    user_id = ctx.author.id
+    c.execute('SELECT level, experience, items FROM users WHERE user_id = ?', (user_id,))
+    result = c.fetchone()
+    if result:
+        level, experience, items = result
+        items_list = items.split(',') if items else 'No items'
+        await ctx.send(f'Level: {level}\nExperience: {experience}\nItems: {", ".join(items_list)}')
+    else:
+        await ctx.send(f'{ctx.author.name} is not registered in the system.')
+
+@bot.command()
+async def claim_daily(ctx):
+    user_id = ctx.author.id
+    now = datetime.utcnow()
+    c.execute('SELECT last_claimed FROM rewards WHERE user_id = ?', (user_id,))
+    result = c.fetchone()
+    if result:
+        last_claimed = datetime.strptime(result[0], '%Y-%m-%d %H:%M:%S') if result[0] else None
+        if last_claimed and now - last_claimed < timedelta(days=1):
+            await ctx.send('You have already claimed your daily reward.')
+            return
+    c.execute('INSERT OR REPLACE INTO rewards (user_id, last_claimed) VALUES (?, ?)', (user_id, now.strftime('%Y-%m-%d %H:%M:%S')))
+    conn.commit()
+    reward_item = 'Mystery Box'
+    c.execute('SELECT items FROM users WHERE user_id = ?', (user_id,))
+    current_items = c.fetchone()[0]
+    if current_items:
+        new_items = current_items + ',' + reward_item
+    else:
+        new_items = reward_item
+    c.execute('UPDATE users SET items = ? WHERE user_id = ?', (new_items, user_id))
+    conn.commit()
+    await ctx.send(f'You have claimed your daily reward: {reward_item}.')
+
 bot.run('YOUR_BOT_TOKEN')
