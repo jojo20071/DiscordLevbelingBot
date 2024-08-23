@@ -62,4 +62,39 @@ async def add_item(ctx, item: str):
         conn.commit()
         await ctx.send(f'{ctx.author.name} has been added to the system with {item} in their inventory.')
 
+@bot.command()
+async def list_items(ctx):
+    user_id = ctx.author.id
+    c.execute('SELECT items FROM users WHERE user_id = ?', (user_id,))
+    result = c.fetchone()
+    if result:
+        items = result[0]
+        if items:
+            await ctx.send(f'{ctx.author.name} has the following items: {items}')
+        else:
+            await ctx.send(f'{ctx.author.name} has no items.')
+    else:
+        await ctx.send(f'{ctx.author.name} is not registered in the system.')
+
+@bot.command()
+async def trade_item(ctx, member: discord.Member, item: str):
+    sender_id = ctx.author.id
+    receiver_id = member.id
+    c.execute('SELECT items FROM users WHERE user_id = ?', (sender_id,))
+    sender_items = c.fetchone()[0]
+    if item in sender_items.split(','):
+        new_sender_items = ','.join([i for i in sender_items.split(',') if i != item])
+        c.execute('UPDATE users SET items = ? WHERE user_id = ?', (new_sender_items, sender_id))
+        c.execute('SELECT items FROM users WHERE user_id = ?', (receiver_id,))
+        receiver_items = c.fetchone()[0]
+        if receiver_items:
+            receiver_items = receiver_items.split(',')
+        else:
+            receiver_items = []
+        receiver_items.append(item)
+        c.execute('UPDATE users SET items = ? WHERE user_id = ?', (','.join(receiver_items), receiver_id))
+        conn.commit()
+        await ctx.send(f'{ctx.author.name} traded {item} to {member.name}.')
+    else:
+        await ctx.send(f'{ctx.author.name} does not have {item}.')
 bot.run('YOUR_BOT_TOKEN')
