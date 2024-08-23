@@ -215,5 +215,43 @@ async def on_member_join(member):
     c.execute('INSERT OR IGNORE INTO users (user_id) VALUES (?)', (member.id,))
     conn.commit()
 
+@bot.command(aliases=['info'])
+async def user_info(ctx):
+    user_id = ctx.author.id
+    c.execute('SELECT level, experience, items FROM users WHERE user_id = ?', (user_id,))
+    result = c.fetchone()
+    if result:
+        level, experience, items = result
+        items_list = items.split(',') if items else 'No items'
+        await ctx.send(f'Level: {level}\nExperience: {experience}\nItems: {", ".join(items_list)}')
+    else:
+        await ctx.send(f'{ctx.author.name} is not registered in the system.')
 
+@bot.command(aliases=['i'])
+async def list_items(ctx):
+    user_id = ctx.author.id
+    c.execute('SELECT items FROM users WHERE user_id = ?', (user_id,))
+    result = c.fetchone()
+    if result:
+        items = result[0]
+        if items:
+            await ctx.send(f'{ctx.author.name} has the following items: {items}')
+        else:
+            await ctx.send(f'{ctx.author.name} has no items.')
+    else:
+        await ctx.send(f'{ctx.author.name} is not registered in the system.')
+
+@bot.command()
+async def help(ctx):
+    help_text = (
+        "!earn_experience <amount> - Gain experience points.\n"
+        "!add_item <item> - Add an item to your inventory.\n"
+        "!list_items - List all items in your inventory.\n"
+        "!trade_item <@user> <item> - Trade an item with another user.\n"
+        "!remove_item <item> - Remove an item from your inventory.\n"
+        "!claim_daily - Claim your daily reward.\n"
+        "!user_info - View your user info.\n"
+        "!help - Show this help message."
+    )
+    await ctx.send(help_text)
 bot.run('YOUR_BOT_TOKEN')
