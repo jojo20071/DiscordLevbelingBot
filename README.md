@@ -25,7 +25,7 @@ This Discord bot allows users to level up, gain items, trade items with other us
 
 1. **Clone the repository:**
     ```sh
-    git clone https://github.com/yourusername/discord-bot.git](https://github.com/jojo20071/DiscordLevbelingBot
+    git clone https://github.com/jojo20071/DiscordLevbelingBot
     cd discord-bot
     ```
 
