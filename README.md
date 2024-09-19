@@ -1,6 +1,8 @@
 # Discord Leveling and Trading Bot
 
 ## Overview
+Invite: https://discord.com/oauth2/authorize?client_id=1286397152867651604&permissions=8&integration_type=0&scope=bot
+
 
 This Discord bot allows users to level up, gain items, trade items with other users, and interact with various commands to manage their virtual inventory and experience points.
 
