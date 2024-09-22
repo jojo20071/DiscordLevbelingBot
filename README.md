@@ -1,5 +1,7 @@
 # Discord Leveling and Trading Bot
 
+![image](https://github.com/user-attachments/assets/61b19e94-e870-42de-8378-3a3494eda3ea)
+
 ## Overview
 Invite: https://discord.com/oauth2/authorize?client_id=1286397152867651604&permissions=8&integration_type=0&scope=bot
 
